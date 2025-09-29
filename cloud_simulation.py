@@ -106,11 +106,16 @@ class CloudSimulation:
                 row_data = []
                 for j, value in enumerate(row):
                     if j == 32:  # Target attribute (column 32: 1-attack, 0-normal)
-                        # Convert attack types to binary
-                        if isinstance(value, str) and value.lower() not in ['normal', '0', 'benign']:
-                            self.target.append(1.0)  # Attack
-                        else:
-                            self.target.append(0.0)  # Normal
+                        # Convert to float and handle Bot-IoT labels (1=attack, 0=normal)
+                        try:
+                            label_value = float(value)
+                            self.target.append(label_value)  # Use actual numeric labels (1=attack, 0=normal)
+                        except:
+                            # Fallback for string labels
+                            if isinstance(value, str) and value.lower() in ['normal', '0', 'benign']:
+                                self.target.append(0.0)  # Normal
+                            else:
+                                self.target.append(1.0)  # Attack
                     else:
                         # Handle non-numeric values
                         if isinstance(value, str):
@@ -336,14 +341,8 @@ class CloudSimulation:
         
         # Limit dataset size for efficiency (but use representative subset)
         if len(self.data) > 1000:
-            print(f"Limiting dataset to 1000 samples for efficiency...")
-            indices = list(range(len(self.data)))
-            random.shuffle(indices)
-            selected_indices = indices[:1000]
-            
-            self.data = [self.data[i] for i in selected_indices]
-            self.target = [self.target[i] for i in selected_indices]
-            print(f"Using {len(self.data)} samples")
+            target_size = 1000
+            self.apply_stratified_sampling(target_size)
         
         # Step 3: VM Task Assignment and Load Balancing (equivalent to Java coordination)
         print("\n=== Phase 3: VM Load Balancing ===")
@@ -442,6 +441,43 @@ class CloudSimulation:
         
         print("\nCloud Simulation with SFDO-DRNN completed successfully!")
         return results_summary
+    
+    def apply_stratified_sampling(self, target_size: int):
+        """Apply stratified sampling to ensure both classes are represented"""
+        print(f"Applying stratified sampling to {target_size} samples...")
+        
+        # Get indices for each class
+        attack_indices = [i for i, label in enumerate(self.target) if label == 1.0]
+        normal_indices = [i for i, label in enumerate(self.target) if label == 0.0]
+        
+        print(f"Available: {len(attack_indices)} attacks, {len(normal_indices)} normal")
+        
+        # Ensure we have both classes by taking all available normal samples
+        if len(normal_indices) == 0:
+            print("⚠ No normal samples found - cannot perform binary classification")
+            # Take first 1000 attack samples as fallback
+            selected_indices = attack_indices[:target_size]
+        else:
+            # Take all normal samples (since they're rare) and fill rest with attacks
+            n_normal = min(len(normal_indices), target_size // 5)  # Up to 20% normal
+            n_attacks = min(target_size - n_normal, len(attack_indices))
+            
+            print(f"Sampling: {n_attacks} attacks, {n_normal} normal")
+            
+            # Randomly select samples
+            random.shuffle(attack_indices)
+            random.shuffle(normal_indices)
+            
+            selected_indices = attack_indices[:n_attacks] + normal_indices[:n_normal]
+            random.shuffle(selected_indices)  # Shuffle final selection
+        
+        # Apply selection
+        self.data = [self.data[i] for i in selected_indices]
+        self.target = [self.target[i] for i in selected_indices]
+        
+        attacks = sum(self.target)
+        normal = len(self.target) - attacks
+        print(f"Final dataset: {len(self.data)} samples ({int(attacks)} attacks, {int(normal)} normal)")
 
 if __name__ == "__main__":
     # Test the simulation
