@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Simulation with SFDO-DRNN</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .results {
+            display: none;
+        }
+        .logs {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .status.running {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .status.completed {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Cloud Simulation with SFDO-DRNN</h1>
+        <p>Advanced Cloud Security Analysis using SailFish-Dolphin Optimization and Deep Recurrent Neural Networks</p>
+    </div>
+
+    <div class="info-box">
+        <h3>About This Application</h3>
+        <p>This is a research implementation that combines cloud simulation (CloudSim) with advanced machine learning techniques including:</p>
+        <ul>
+            <li><strong>SFDO:</strong> SailFish-Dolphin Optimization Algorithm</li>
+            <li><strong>DRNN:</strong> Deep Recurrent Neural Networks</li>
+            <li><strong>FCM:</strong> Fuzzy C-Means Clustering</li>
+            <li><strong>SVM:</strong> Support Vector Machines</li>
+            <li><strong>ANFIS:</strong> Adaptive Neuro-Fuzzy Inference System</li>
+        </ul>
+        <p>The system analyzes Bot-IoT network traffic data for enhanced cybersecurity in cloud environments.</p>
+    </div>
+
+    <div class="container">
+        <h2>Simulation Parameters</h2>
+        <form id="simulationForm">
+            <div class="form-group">
+                <label for="groupSize">Group Size:</label>
+                <input type="number" id="groupSize" name="groupSize" value="4" min="1" max="10">
+                <small>Number of groups for clustering (default: 4)</small>
+            </div>
+            <div class="form-group">
+                <label for="trainingPercentage">Training Data (%):</label>
+                <input type="number" id="trainingPercentage" name="trainingPercentage" value="80" min="50" max="90">
+                <small>Percentage of data used for training (default: 80%)</small>
+            </div>
+            <button type="submit" id="startBtn">START SIMULATION</button>
+            <button type="button" id="statusBtn" onclick="updateStatus()">REFRESH STATUS</button>
+        </form>
+    </div>
+
+    <div class="container">
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div id="results" class="results">
+            <h3>Simulation Results</h3>
+            <div class="results-grid" id="resultsGrid">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+
+        <div id="logsContainer">
+            <h3>Simulation Logs</h3>
+            <div id="logs" class="logs">
+                <!-- Logs will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let statusInterval;
+
+        document.getElementById('simulationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const groupSize = parseInt(document.getElementById('groupSize').value);
+            const trainingPercentage = parseInt(document.getElementById('trainingPercentage').value);
+            
+            try {
+                const response = await fetch('/api/start_simulation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        group_size: groupSize,
+                        training_percentage: trainingPercentage
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('startBtn').textContent = 'SIMULATION RUNNING...';
+                    startStatusMonitoring();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            }
+        });
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                
+                updateStatusDisplay(status);
+                updateLogs(status.logs);
+                
+                if (!status.is_running && Object.keys(status.results).length > 0) {
+                    updateResults(status.results);
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('startBtn').textContent = 'START SIMULATION';
+                    if (statusInterval) {
+                        clearInterval(statusInterval);
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+
+        function startStatusMonitoring() {
+            statusInterval = setInterval(updateStatus, 2000);
+        }
+
+        function updateStatusDisplay(status) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.display = 'block';
+            
+            if (status.is_running) {
+                statusDiv.className = 'status running';
+                statusDiv.textContent = 'Simulation is running... Please wait.';
+            } else if (Object.keys(status.results).length > 0) {
+                statusDiv.className = 'status completed';
+                statusDiv.textContent = 'Simulation completed successfully!';
+            } else {
+                statusDiv.style.display = 'none';
+            }
+        }
+
+        function updateLogs(logs) {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = logs.join('<br>');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function updateResults(results) {
+            const resultsDiv = document.getElementById('results');
+            const resultsGrid = document.getElementById('resultsGrid');
+            
+            resultsGrid.innerHTML = `
+                <div class="metric">
+                    <div class="metric-value">${results.accuracy}%</div>
+                    <div class="metric-label">Accuracy</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${results.precision}%</div>
+                    <div class="metric-label">Precision</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${results.recall}%</div>
+                    <div class="metric-label">Recall</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${results.f1_score}%</div>
+                    <div class="metric-label">F1-Score</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${results.execution_time}s</div>
+                    <div class="metric-label">Execution Time</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${results.total_samples}</div>
+                    <div class="metric-label">Total Samples</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${results.training_samples}</div>
+                    <div class="metric-label">Training Samples</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${results.testing_samples}</div>
+                    <div class="metric-label">Testing Samples</div>
+                </div>
+            `;
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        // Initial status update
+        updateStatus();
+    </script>
+</body>
+</html>
