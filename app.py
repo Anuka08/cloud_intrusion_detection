@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 """
 Web interface for Cloud Simulation with SFDO-DRNN
-This serves as a frontend to the Java-based cloud simulation application.
+This serves as a frontend to the Python-based cloud simulation application.
 """
 import os
-import subprocess
 import json
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import threading
 import time
+import traceback
+from cloud_simulation import CloudSimulation
 
 app = Flask(__name__)
-
-# Configuration
-JAVA_CLASSPATH = "74216/build/classes:74216/jar files/cloudanalyst.jar:74216/jar files/gridsim.jar:74216/jar files/iText-2.1.5.jar:74216/jar files/jcommon-1.0.23.jar:74216/jar files/jfreechart-1.0.19.jar:74216/jar files/simjava2.jar"
 
 class SimulationRunner:
     def __init__(self):
@@ -27,55 +25,101 @@ class SimulationRunner:
             self.logs.pop(0)
     
     def run_simulation(self, group_size=4, training_percentage=80):
-        """Run simulation with given parameters"""
+        """Run actual cloud simulation with Python algorithms"""
         self.is_running = True
         self.add_log(f"Starting simulation with group_size={group_size}, training_percentage={training_percentage}")
         
         try:
-            # Since the GUI version doesn't work, we'll simulate the process
-            # In a real scenario, you would call the working Java components here
+            # Create and run the actual cloud simulation
+            simulation = CloudSimulation(group_size=group_size, training_percentage=training_percentage)
+            
             self.add_log("Initializing cloud simulation environment...")
-            time.sleep(2)
+            self.add_log("Setting up VM parameters (10 PMs, 50 VMs)...")
             
             self.add_log("Loading Bot-IoT dataset...")
-            time.sleep(1)
+            self.add_log("Preprocessing network traffic data...")
             
-            self.add_log("Performing feature fusion with SFDO-DRNN...")
-            time.sleep(3)
+            self.add_log("Performing feature fusion with FCM clustering...")
+            self.add_log("Grouping features into clusters...")
             
-            self.add_log("Running Fuzzy C-Means clustering...")
-            time.sleep(2)
+            self.add_log("Running cloud load balancing optimization...")
+            self.add_log("Applying Chicken Swarm Optimization...")
             
-            self.add_log("Training Deep Recurrent Neural Network...")
-            time.sleep(5)
+            self.add_log("Starting machine learning algorithms...")
+            self.add_log("1. Training FCM-ANN classifier...")
             
-            self.add_log("Applying SailFish-Dolphin optimization...")
-            time.sleep(3)
+            self.add_log("2. Training ANFIS classifier...")
             
-            self.add_log("Running SVM classification...")
-            time.sleep(2)
+            self.add_log("3. Training SVM classifier...")
             
-            self.add_log("Generating results...")
-            time.sleep(1)
+            self.add_log("4. Training SFDO-DRNN classifier...")
+            self.add_log("   - SailFish-Dolphin optimization...")
+            self.add_log("   - Deep Recurrent Neural Network...")
             
-            # Simulate results
+            self.add_log("Running full simulation...")
+            
+            # Run the actual simulation
+            results = simulation.run_simulation()
+            
+            # Extract results in the format expected by frontend
+            algorithms = results['algorithms']
+            best_accuracy = max(results['accuracy']) * 100
+            best_precision = max(results['precision']) * 100
+            best_recall = max(results['recall']) * 100
+            best_f1 = max(results['f1_score']) * 100
+            avg_fpr = sum(results['fpr']) / len(results['fpr']) * 100
+            
             self.results = {
-                'accuracy': 94.7,
-                'precision': 92.3,
-                'recall': 96.1,
-                'f1_score': 94.2,
-                'execution_time': 18.5,
+                'accuracy': round(best_accuracy, 2),
+                'precision': round(best_precision, 2),
+                'recall': round(best_recall, 2),
+                'f1_score': round(best_f1, 2),
+                'fpr': round(avg_fpr, 2),
+                'execution_time': round(results['execution_time'], 2),
                 'group_size': group_size,
                 'training_percentage': training_percentage,
-                'total_samples': 5000,
-                'training_samples': int(5000 * training_percentage / 100),
-                'testing_samples': int(5000 * (100 - training_percentage) / 100)
+                'total_samples': results['total_samples'],
+                'training_samples': results['training_samples'],
+                'testing_samples': results['testing_samples'],
+                'algorithms': algorithms,
+                'detailed_results': {
+                    'fcm_ann': {
+                        'accuracy': round(results['accuracy'][0] * 100, 2),
+                        'precision': round(results['precision'][0] * 100, 2),
+                        'recall': round(results['recall'][0] * 100, 2),
+                        'fpr': round(results['fpr'][0] * 100, 2)
+                    },
+                    'anfis': {
+                        'accuracy': round(results['accuracy'][1] * 100, 2),
+                        'precision': round(results['precision'][1] * 100, 2),
+                        'recall': round(results['recall'][1] * 100, 2),
+                        'fpr': round(results['fpr'][1] * 100, 2)
+                    },
+                    'svm': {
+                        'accuracy': round(results['accuracy'][2] * 100, 2),
+                        'precision': round(results['precision'][2] * 100, 2),
+                        'recall': round(results['recall'][2] * 100, 2),
+                        'fpr': round(results['fpr'][2] * 100, 2)
+                    },
+                    'sfdo_drnn': {
+                        'accuracy': round(results['accuracy'][3] * 100, 2),
+                        'precision': round(results['precision'][3] * 100, 2),
+                        'recall': round(results['recall'][3] * 100, 2),
+                        'fpr': round(results['fpr'][3] * 100, 2)
+                    }
+                }
             }
             
             self.add_log("Simulation completed successfully!")
+            self.add_log(f"Best accuracy achieved: {best_accuracy:.2f}%")
+            self.add_log(f"Processing completed in {results['execution_time']:.2f} seconds")
             
         except Exception as e:
-            self.add_log(f"Error during simulation: {str(e)}")
+            error_msg = f"Error during simulation: {str(e)}"
+            self.add_log(error_msg)
+            self.add_log(f"Traceback: {traceback.format_exc()}")
+            print(f"Simulation error: {e}")
+            print(traceback.format_exc())
         finally:
             self.is_running = False
     

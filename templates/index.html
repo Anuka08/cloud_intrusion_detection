@@ -260,22 +260,76 @@
             const resultsDiv = document.getElementById('results');
             const resultsGrid = document.getElementById('resultsGrid');
             
+            let detailedResultsHTML = '';
+            if (results.detailed_results) {
+                detailedResultsHTML = `
+                    <div class="algorithm-results">
+                        <h4>Algorithm Comparison</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                            <thead>
+                                <tr style="background-color: #f8f9fa;">
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Algorithm</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Accuracy</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Precision</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Recall</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">FPR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 8px;"><strong>FCM-ANN</strong></td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.fcm_ann.accuracy}%</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.fcm_ann.precision}%</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.fcm_ann.recall}%</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.fcm_ann.fpr}%</td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 8px;"><strong>ANFIS</strong></td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.anfis.accuracy}%</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.anfis.precision}%</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.anfis.recall}%</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.anfis.fpr}%</td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 8px;"><strong>SVM</strong></td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.svm.accuracy}%</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.svm.precision}%</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.svm.recall}%</td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;">${results.detailed_results.svm.fpr}%</td>
+                                </tr>
+                                <tr style="background-color: #e7f3ff;">
+                                    <td style="border: 1px solid #ddd; padding: 8px;"><strong>SFDO-DRNN (Proposed)</strong></td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;"><strong>${results.detailed_results.sfdo_drnn.accuracy}%</strong></td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;"><strong>${results.detailed_results.sfdo_drnn.precision}%</strong></td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;"><strong>${results.detailed_results.sfdo_drnn.recall}%</strong></td>
+                                    <td style="border: 1px solid #ddd; padding: 8px;"><strong>${results.detailed_results.sfdo_drnn.fpr}%</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
             resultsGrid.innerHTML = `
                 <div class="metric">
                     <div class="metric-value">${results.accuracy}%</div>
-                    <div class="metric-label">Accuracy</div>
+                    <div class="metric-label">Best Accuracy</div>
                 </div>
                 <div class="metric">
                     <div class="metric-value">${results.precision}%</div>
-                    <div class="metric-label">Precision</div>
+                    <div class="metric-label">Best Precision</div>
                 </div>
                 <div class="metric">
                     <div class="metric-value">${results.recall}%</div>
-                    <div class="metric-label">Recall</div>
+                    <div class="metric-label">Best Recall</div>
                 </div>
                 <div class="metric">
                     <div class="metric-value">${results.f1_score}%</div>
-                    <div class="metric-label">F1-Score</div>
+                    <div class="metric-label">Best F1-Score</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">${results.fpr}%</div>
+                    <div class="metric-label">Avg FPR</div>
                 </div>
                 <div class="metric">
                     <div class="metric-value">${results.execution_time}s</div>
@@ -289,10 +343,7 @@
                     <div class="metric-value">${results.training_samples}</div>
                     <div class="metric-label">Training Samples</div>
                 </div>
-                <div class="metric">
-                    <div class="metric-value">${results.testing_samples}</div>
-                    <div class="metric-label">Testing Samples</div>
-                </div>
+                ${detailedResultsHTML}
             `;
             
             resultsDiv.style.display = 'block';
